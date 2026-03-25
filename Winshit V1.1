@@ -1,0 +1,77 @@
+@echo off
+setlocal enabledelayedexpansion
+
+echo ===============================================================
+echo           Windows do Shell In Terminal (Win.shit) V1.1
+echo               Code By Briggs R. Nerdy Bird DBA
+echo.
+echo    The entire reason this script exists is because Windows
+echo        Does NOT Natively support running Shell Scripts
+echo To use WinSHit, set any Shell script (.SH) to open with WinSHit
+echo ===============================================================
+echo.
+echo.
+echo.
+
+
+REM Get the clicked .sh file
+set "SCRIPT=%~1"
+
+if "%SCRIPT%"=="" (
+    echo No script provided.
+    pause
+    exit /b 1
+)
+
+REM Check for Git Bash (use env vars)
+set "GIT_BASH="
+
+if defined ProgramFiles (
+    if exist "%ProgramFiles%\Git\bin\bash.exe" (
+        set "GIT_BASH=%ProgramFiles%\Git\bin\bash.exe"
+    )
+)
+
+if not defined GIT_BASH if defined ProgramFiles(x86) (
+    if exist "%ProgramFiles(x86)%\Git\bin\bash.exe" (
+        set "GIT_BASH=%ProgramFiles(x86)%\Git\bin\bash.exe"
+    )
+)
+
+if defined GIT_BASH (
+    echo Using Git Bash...
+    "%GIT_BASH%" "%SCRIPT%"
+    pause
+    exit /b
+)
+
+REM Check for WSL
+where wsl >nul 2>nul
+if %errorlevel%==0 (
+
+    REM Check if a distro is installed
+    for /f %%i in ('wsl -l -q') do set DISTRO_FOUND=1
+
+    if not defined DISTRO_FOUND (
+        echo WSL is installed but no distributions found.
+        echo Install one from the Microsoft Store first.
+        pause
+        exit /b 1
+    )
+
+    echo Using WSL...
+
+    REM Convert Windows path to Linux path safely
+    for /f "delims=" %%i in ('wsl wslpath "%SCRIPT%"') do set "LINUX_SCRIPT=%%i"
+
+    wsl bash "!LINUX_SCRIPT!"
+    pause
+    exit /b
+)
+
+echo No compatible shell found.
+echo Please install Git Bash or enable WSL.
+pause
+exit /b 1
+
+endlocal
